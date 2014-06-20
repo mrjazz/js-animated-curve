@@ -1,0 +1,170 @@
+<html>
+
+<body>    
+	<canvas id="canvas" width="600" height="500" />	
+    <script>
+		var Besier = function() {
+			
+			var DELAY_PLOT = 20;
+			var DELAY_TIMEOUT = 20;		
+			var TIMEOUT = 30000;
+			
+			var _timer = 0;
+			var _timerTimeout = 0;
+			var canvas = document.getElementById("canvas");
+			var ctx = canvas.getContext("2d");
+			
+			var last;
+			var buffer = [];
+			var current = 0;
+			var timerFunc = null;
+			
+			this.init = function() {
+				
+				last = {x: 0, y: 300};
+				ctx.beginPath();
+				ctx.moveTo(last.x, last.y);
+				buffer = [];
+				current = 0;
+				_timerTimeout = 0;
+				_timer = 0;
+				
+				timerFunc = setInterval(function () {
+					
+					//console.log(_timer, buffer.length);
+					
+					_timerTimeout += DELAY_TIMEOUT;
+					if (_timerTimeout > TIMEOUT) {
+						console.log("Timeout");
+						clearInterval(timerFunc);
+						return;
+					}
+					
+					if (buffer.length - current >= 3) {
+						if (current == 0) {
+							last = buffer[0];							
+						}
+						
+						current++;						
+						
+						var xc = (buffer[current].x + buffer[current + 1].x) / 2;
+						var yc = (buffer[current].y + buffer[current + 1].y) / 2;						
+						var cur = {x: xc, y: yc}
+						
+						_plot(xc, yc, "#00FF00", 3);
+						_plot(buffer[current].x, buffer[current].y, "#FF0000", 3);
+						
+						//console.log("-> " + xc + " : " + yc);
+						
+						_curve(last, buffer[current], cur);						
+						//console.log(current, buffer.length)
+						last = cur;
+					} else {
+//						if (buffer.length - current == 2) {
+//							clearInterval(timerFunc)
+//						}
+					}
+					
+					//console.log(buffer.length);
+				}, DELAY_TIMEOUT);
+			}
+			
+			this.add = function(x, y) {				
+				buffer.push({x: x, y: y});
+			}
+			
+			this.draw = function (points) {
+				timer = 0;				
+				ctx.beginPath();
+
+				 // move to the first point
+				ctx.moveTo(points[0].x, points[0].y);
+				var last = points[0];
+
+				//plot(100, 100, "#ff0000", 5)
+
+				for (i = 1; i < points.length - 2; i++) {			
+					
+					var xc = (points[i].x + points[i + 1].x) / 2;
+					var yc = (points[i].y + points[i + 1].y) / 2;
+					var cur = {x: xc, y: yc}
+					_curve(last, points[i], cur);										
+					
+					_plot(xc, yc, "#00FF00", 3);
+					_plot(points[i].x, points[i].y, "#FF0000", 3);
+					
+					
+					//ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+					last = cur;
+				}
+			}
+
+			//ctx.quadraticCurveTo(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
+			//ctx.stroke(); 
+
+			function _delay(x, y) {
+				setTimeout(function () {
+					_plot(x, y, "#FF0000", 2);
+				}, _timer);				
+				_timer += DELAY_PLOT;
+				console.log(_timer, x, y);
+			}
+
+			function _plot(x, y, color, size) {
+				ctx.fillStyle = color;
+				if (!size) size = 1;
+				//ctx.fillRect(x, y, size, size);
+				ctx.strokeStyle = "rgb(255, 0, 0)";
+				ctx.beginPath();
+				ctx.arc(x,y,size,0,2*Math.PI);
+				//ctx.lineWidth = .5;
+				ctx.fill();
+				//ctx.stroke();
+			}
+
+			function _curve(p0, p2, p1) {
+				//console.log(p0, p2, p1);
+				for (var t = 0; t <= 1; t += .01) {
+					X = p0.x * (1 - t) * (1 - t)  + 2 * p2.x * t * (1 - t) + p1.x * t * t;
+					Y = p0.y * (1 - t) * (1 - t) + 2 * p2.y * t * (1 - t) + p1.y * t * t;
+					_delay(X, Y)												
+				}
+			}
+		}
+		
+		var points = [];
+		
+		for (var i = 20; i < 420; i += 20) {
+			points.push({
+				x: i,
+				y: Math.round(Math.random() * 200) + 150
+			});
+		}
+		
+		var current = 0;
+		
+		var api = new Besier();
+		api.init();
+		api.draw(points);				
+		
+//		function next() {
+//			api.add(points[current].x, points[current].y);
+//			current++
+//		}
+		
+		
+//		for(var i in points) {
+//			delay1(points[i], i * 50);
+//		}
+		
+		function delay1(point, delay) {			
+			setTimeout(function() {				
+				api.add(point.x, point.y)				
+			}, delay)
+		}
+		
+		
+    </script>
+</body>
+
+</html>
